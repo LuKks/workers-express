@@ -1,6 +1,6 @@
 {
   "name": "workers-express",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Express router for CloudFlare Workers",
   "main": "index.js",
   "files": [
