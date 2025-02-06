@@ -3,6 +3,7 @@ const ExpressRequest = require('./lib/express-request.js')
 const ExpressResponse = require('./lib/express-response.js')
 const bodyParser = require('./lib/body-parser.js')
 const cookieParser = require('./lib/cookie-parser.js')
+const promiseWithResolvers = require('./lib/promise-resolvers.js')
 
 // Compatibility with Express
 module.exports = express
@@ -23,7 +24,7 @@ class Express {
     this.errors = []
   }
 
-  async fetch (request, env) {
+  async fetch (request, env, ctx) {
     const req = new ExpressRequest(request, env)
     const res = new ExpressResponse()
 
@@ -35,25 +36,36 @@ class Express {
 
       if (matchMethod && (!route.pathname || matchPath)) {
         await this._run(req, res, route.callback)
-      }
 
-      if (res.headersSent || res.response) {
-        break
+        // Found a matching route or middleware responded earlier
+        if (route.callback.length === 2 || res.headersSent) {
+          break
+        }
       }
     }
 
-    if (!res.response) {
-      return new Response(null, { status: 500 })
+    // Maybe a route handler is doing background operations
+    if (!res.headersSent) {
+      // TODO: Maybe timeout?
+      await res._resolverHeaders.promise
     }
 
-    return res.response
+    if (ctx && res._streaming) {
+      ctx.waitUntil(res._resolverStream.promise)
+    }
+
+    return new Response(res._streaming ? res._reader : res._data, res.responseOptions())
   }
 
   async _run (req, res, callback) {
     const resolver = promiseWithResolvers()
 
     try {
-      await callback(req, res, resolver.resolve)
+      if (callback.length === 3) {
+        await callback(req, res, resolver.resolve)
+      } else {
+        await callback(req, res)
+      }
     } catch (err) {
       if (this.errors.length === 0) {
         throw err
@@ -62,10 +74,23 @@ class Express {
       for (const route of this.errors) {
         await route.callback(err, req, res, resolver.resolve)
       }
+
+      // Error happened but no response
+      if (!res.headersSent) {
+        res.statusCode = 500
+        res.headersSent = true
+        res._data = null
+        res._resolverHeaders.resolve()
+      }
     }
 
     // Maybe a middleware responded earlier
-    if (res.headersSent || res.response) {
+    if (res.headersSent) {
+      resolver.resolve()
+    }
+
+    // Normal route so we auto-resolve
+    if (callback.length === 2) {
       resolver.resolve()
     }
 
@@ -113,16 +138,4 @@ class Express {
   post (pathname, callback) {
     this._add('POST', pathname, callback)
   }
-}
-
-function promiseWithResolvers () {
-  let resolve = null
-  let reject = null
-
-  const promise = new Promise((_resolve, _reject) => {
-    resolve = _resolve
-    reject = _reject
-  })
-
-  return { promise, resolve, reject }
 }

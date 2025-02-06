@@ -34,6 +34,38 @@ test('basic', async function (t) {
   t.alike(await response.json(), 'Hello World!')
 })
 
+test('stream response - worker', async function (t) {
+  t.plan(3)
+
+  const worker = await wranglerWorker({
+    t,
+    filename: path.join(__dirname, 'worker.mjs')
+  })
+
+  const response = await worker.fetch(worker.$url + '/stream', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ msg: 'Hello World!' })
+  })
+
+  t.is(response.status, 200)
+
+  const decoder = new TextDecoder('utf-8')
+  const chunks = []
+  const expected = ['Hello', ' ', 'World', '!']
+
+  for await (const chunk of response.body) {
+    const value = decoder.decode(chunk)
+
+    chunks.push(value)
+  }
+
+  t.ok(chunks.length >= 4)
+  t.is(chunks.join(''), expected.map(c => c.repeat(16 * 1024)).join(''))
+})
+
 test('routing', async function (t) {
   t.plan(5)
 
