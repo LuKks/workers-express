@@ -1,0 +1,31 @@
+{
+  "name": "simple-express",
+  "version": "0.0.0",
+  "description": "Express router for CloudFlare Workers",
+  "main": "index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "standard && brittle test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lukks/simple-express.git"
+  },
+  "author": "Lucas Barrena (LuKks)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lukks/simple-express/issues"
+  },
+  "homepage": "https://github.com/lukks/simple-express#readme",
+  "devDependencies": {
+    "brittle": "^3.3.2",
+    "standard": "^17.1.0",
+    "wrangler-worker": "^1.0.0"
+  },
+  "dependencies": {
+    "cookie": "^1.0.2",
+    "path-to-regexp": "^8.2.0"
+  }
+}
