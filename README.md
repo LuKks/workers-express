@@ -1,9 +1,9 @@
-# simple-express
+# workers-express
 
 Express router for CloudFlare Workers
 
 ```
-npm i simple-express
+npm i workers-express
 ```
 
 The routing behaviour compared to Express is not the exactly same.
@@ -13,7 +13,7 @@ Open an issue if a missing feature is needed.
 ## Usage
 
 ```js
-const express = require('simple-express')
+const express = require('workers-express')
 
 const app = express()
 
