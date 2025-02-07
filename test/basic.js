@@ -34,7 +34,7 @@ test('basic', async function (t) {
   t.alike(await response.json(), 'Hello World!')
 })
 
-test('stream response - worker', async function (t) {
+test('stream response - background - worker', async function (t) {
   t.plan(3)
 
   const worker = await wranglerWorker({
@@ -42,7 +42,39 @@ test('stream response - worker', async function (t) {
     filename: path.join(__dirname, 'worker.mjs')
   })
 
-  const response = await worker.fetch(worker.$url + '/stream', {
+  const response = await worker.fetch(worker.$url + '/stream-background', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ msg: 'Hello World!' })
+  })
+
+  t.is(response.status, 200)
+
+  const decoder = new TextDecoder('utf-8')
+  const chunks = []
+  const expected = ['Hello', ' ', 'World', '!']
+
+  for await (const chunk of response.body) {
+    const value = decoder.decode(chunk)
+
+    chunks.push(value)
+  }
+
+  t.is(chunks.length, 4)
+  t.is(chunks.join(''), expected.join(''))
+})
+
+test('stream response - async - worker', async function (t) {
+  t.plan(3)
+
+  const worker = await wranglerWorker({
+    t,
+    filename: path.join(__dirname, 'worker.mjs')
+  })
+
+  const response = await worker.fetch(worker.$url + '/stream-async', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

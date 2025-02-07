@@ -28,6 +28,26 @@ class Express {
     const req = new ExpressRequest(request, env)
     const res = new ExpressResponse()
 
+    // TODO: This easy fix allows real-time streaming of small chunks of data
+    // Ideally, should find a better way to handle the async/stream flow
+    this._routing(req, res).catch(err => {
+      throw err
+    })
+
+    // Maybe a route handler is doing background operations
+    if (!res.headersSent) {
+      // TODO: Maybe timeout?
+      await res._resolverHeaders.promise
+    }
+
+    if (ctx && res._streaming) {
+      ctx.waitUntil(res._resolverStream.promise)
+    }
+
+    return new Response(res._streaming ? res._readable : res._data, res.responseOptions())
+  }
+
+  async _routing (req, res) {
     // Sequential route ordering and matching
     // Intended to be simpler, thus incompatible with Express
     for (const route of this.routes) {
@@ -43,18 +63,6 @@ class Express {
         }
       }
     }
-
-    // Maybe a route handler is doing background operations
-    if (!res.headersSent) {
-      // TODO: Maybe timeout?
-      await res._resolverHeaders.promise
-    }
-
-    if (ctx && res._streaming) {
-      ctx.waitUntil(res._resolverStream.promise)
-    }
-
-    return new Response(res._streaming ? res._readable : res._data, res.responseOptions())
   }
 
   async _run (req, res, callback) {
