@@ -62,8 +62,8 @@ test('stream response - worker', async function (t) {
     chunks.push(value)
   }
 
-  t.ok(chunks.length >= 4)
-  t.is(chunks.join(''), expected.map(c => c.repeat(16 * 1024)).join(''))
+  t.is(chunks.length, 4)
+  t.is(chunks.join(''), expected.join(''))
 })
 
 test('routing', async function (t) {

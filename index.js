@@ -54,7 +54,7 @@ class Express {
       ctx.waitUntil(res._resolverStream.promise)
     }
 
-    return new Response(res._streaming ? res._reader : res._data, res.responseOptions())
+    return new Response(res._streaming ? res._readable : res._data, res.responseOptions())
   }
 
   async _run (req, res, callback) {

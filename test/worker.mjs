@@ -13,7 +13,7 @@ app.post('/stream', async function (req, res) {
     const data = ['Hello', ' ', 'World', '!']
 
     for (const chunk of data) {
-      res.write(chunk.repeat(16 * 1024))
+      res.write(chunk)
 
       await new Promise(resolve => setTimeout(resolve, 100))
     }
