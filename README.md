@@ -23,7 +23,9 @@ app.get('/', function (req, res) {
   res.json('Hello World!')
 })
 
-export default app
+export default {
+  fetch: app.fetch.bind(app) // (Tmp fix for now.)
+}
 ```
 
 CloudFlare will use the fetch method, for example:
