@@ -48,6 +48,8 @@ class Express {
   }
 
   async _routing (req, res) {
+    let found = false
+
     // Sequential route ordering and matching
     // Intended to be simpler, thus incompatible with Express
     for (const route of this.routes) {
@@ -59,9 +61,17 @@ class Express {
 
         // Found a matching route or middleware responded earlier
         if (route.callback.length === 2 || res.headersSent) {
+          found = true
           break
         }
       }
+    }
+
+    if (!found) {
+      res.statusCode = 404
+
+      res.headersSent = true
+      res._resolverHeaders.resolve()
     }
   }
 

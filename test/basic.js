@@ -225,6 +225,36 @@ test('body json', async function (t) {
   t.alike(await response.json(), null)
 })
 
+test('not found - unhandled', async function (t) {
+  const app = express()
+
+  app.get('/', function (req, res) {
+    res.json('Hello World!')
+  })
+
+  const response = await app.fetch(new Request('http://localhost/not-found'))
+
+  t.is(response.status, 404)
+  t.alike(await response.arrayBuffer(), new ArrayBuffer(0))
+})
+
+test('not found - middleware', async function (t) {
+  const app = express()
+
+  app.get('/', function (req, res) {
+    res.json('Hello World!')
+  })
+
+  app.use(function (req, res) {
+    res.status(400).json('Not found!')
+  })
+
+  const response = await app.fetch(new Request('http://localhost/not-found'))
+
+  t.is(response.status, 400)
+  t.alike(await response.json(), 'Not found!')
+})
+
 test('cookies', async function (t) {
   const app = express()
 
